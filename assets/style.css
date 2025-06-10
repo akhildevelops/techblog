@@ -33,6 +33,10 @@ body {
   flex-direction: column;
 }
 
+img {
+  width: 100%;
+}
+
 .site-title {
   font-size: 2.5em;
   margin-bottom: 10px;
