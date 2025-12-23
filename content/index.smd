@@ -1,7 +1,0 @@
----
-.title = "Learn",
-.date = @date("1990-01-01T00:00:00"),
-.author = "Akhil Teja",
-.layout = "index.shtml",
-.draft = false,
---- 
