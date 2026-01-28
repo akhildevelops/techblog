@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+    <!-- Enable responsiveness on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    
+      
+        
+        <meta name="description" content="A simple timer application built in Zig that uses Linux signal interrupts to show the remaining time in the terminal and notify the user once the timer ends." />
+        <meta property="og:description" content="A simple timer application built in Zig that uses Linux signal interrupts to show the remaining time in the terminal and notify the user once the timer ends." />
+        <meta property="twitter:description" content="A simple timer application built in Zig that uses Linux signal interrupts to show the remaining time in the terminal and notify the user once the timer ends." />
+      
+    
+
+    <!-- Title -->
+    
+      
+    
+    <title>
+    
+    Learning Linux signal interrupts from building a timer
+    
+</title>
+
+    <!-- Additional Facebook Meta Tags -->
+    <meta property="og:site_name" content="" />
+    <meta
+      property="og:url"
+      content="https:&#x2F;&#x2F;blog.akhildevelops.co.in&#x2F;timer-zig&#x2F;"
+    />
+    <meta
+      property="og:type"
+      content="article"
+    />
+    <meta property="og:title" content="Learning Linux signal interrupts from building a timer" />
+
+    <!-- Additional Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      property="twitter:url"
+      content="https:&#x2F;&#x2F;blog.akhildevelops.co.in&#x2F;timer-zig&#x2F;"
+    />
+    <meta name="twitter:title" content="Learning Linux signal interrupts from building a timer" />
+
+    <!-- Additional Fediverse Tags -->
+     
+
+    <!-- Cover images -->
+    
+    
+
+    <meta
+      property="og:image"
+      content="https:&#x2F;&#x2F;blog.akhildevelops.co.in&#x2F;icons&#x2F;favicon&#x2F;web-app-manifest-512x512.png"
+    />
+
+    <meta
+      name="twitter:image"
+      content="https:&#x2F;&#x2F;blog.akhildevelops.co.in&#x2F;icons&#x2F;favicon&#x2F;web-app-manifest-512x512.png"
+    />
+
+    <!-- Favicons -->
+    
+    <link
+      rel="icon"
+      type="image/png"
+      href="https:&#x2F;&#x2F;blog.akhildevelops.co.in/icons/favicon/favicon-96x96.png"
+      sizes="96x96"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="https:&#x2F;&#x2F;blog.akhildevelops.co.in/icons/favicon/favicon.svg"
+    />
+    <link
+      rel="shortcut icon"
+      href="https:&#x2F;&#x2F;blog.akhildevelops.co.in/icons/favicon/favicon.ico"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="https:&#x2F;&#x2F;blog.akhildevelops.co.in/icons/favicon/apple-touch-icon.png"
+    />
+    <meta name="apple-mobile-web-app-title" content="Learning Linux signal interrupts from building a timer" />
+    <link
+      rel="manifest"
+      href="https:&#x2F;&#x2F;blog.akhildevelops.co.in/icons/favicon/site.webmanifest"
+    />
+    
+
+    <!-- RSS Feed -->
+    
+
+    <!-- Load Styles -->
+    
+      <link
+        rel="stylesheet"
+        href="https://blog.akhildevelops.co.in/site.css"
+      />
+    
+
+    <!-- Syntax highlighting theming -->
+    
+
+    <!-- Load Fonts -->
+    
+
+  
+
+
+
+
+
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  
+
+
+
+<!-- Forcing Font -->
+<style>
+body {
+  font-family:
+    "JetBrains Mono", Menlo, Monaco, Lucida Console, Liberation Mono,
+    DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New,
+    monospace, serif !important;
+}
+</style>
+
+
+    <!-- Pass Theme Preference as Data Attribute -->
+    <script src="https://blog.akhildevelops.co.in/js/init-theme.js"></script>
+
+    <!-- Reference return to click position script -->
+    <script defer src="https://blog.akhildevelops.co.in/js/reference-return.js"></script>
+
+    <!-- Additional scripts -->
+    
+      
+      
+        <script src="https://blog.akhildevelops.co.in/js/toggle-theme.js"></script>
+      
+      
+<!-- MathJax script for rendering LaTeX math equations -->
+<script src="https://blog.akhildevelops.co.in/js/mathjax-config.js"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"
+  async
+></script>
+
+
+      
+
+    
+  </head>
+
+  <!-- Body element (contents of the page) -->
+  <body class="hack main container">
+    
+  
+    
+    
+      
+  
+  <section class="nav-header">
+    <nav
+      itemscope
+      itemtype="http://schema.org/SiteNavigationElement"
+      class="navbar"
+    >
+      <section class="nav-links">
+        
+        <a
+          itemprop="url"
+          class=""
+          href="https://blog.akhildevelops.co.in"
+        >
+          <span itemprop="name">Home</span>
+        </a>
+        
+      </section>
+    </nav>
+    <aside class="user-actions-container">
+       
+      <a id="dark-mode-toggle" href="#">
+        <img
+          src="https://blog.akhildevelops.co.in/icons/sun.svg"
+          id="sun-icon"
+          class="invert-icon"
+          alt="Light mode"
+        />
+        <img
+          src="https://blog.akhildevelops.co.in/icons/moon.svg"
+          id="moon-icon"
+          alt="Dark mode"
+        />
+      </a>
+         
+    </aside>
+  </section>
+  
+  
+
+    
+
+
+    <main>
+      
+
+<article itemscope itemtype="http://schema.org/BlogPosting">
+    <header>
+        <h1 itemprop="headline">Learning Linux signal interrupts from building a timer</h1>
+        <data class="muted">
+    <svg class="icon i-clock" viewBox="0 0 32 32"
+         width="16" height="16" fill="none" stroke="currentcolor"
+         stroke-linecap="round" stroke-linejoin="round" stroke-width="6.25%">
+        <circle cx="16" cy="16" r="14"/>
+        <path d="M16 8 L16 16 20 20"/>
+    </svg>
+    <data>3 minute read</data>
+    <svg class="icon i-edit" viewBox="0 0 32 32"
+         width="16" height="16" fill="none" stroke="currentcolor"
+         stroke-linecap="round" stroke-linejoin="round" stroke-width="6.25%">
+        <path d="M30 7 L25 2 5 22 3 29 10 27 Z M21 6 L26 11 Z M5 22 L10 27 Z"/>
+    </svg>
+
+    Published: 2026-01-28
+</data>
+    </header>
+
+    <article itemprop="articleBody">
+        
+            <p>A simple timer application built in Zig that uses Linux signal interrupts to show the remaining time in the terminal and notify the user once the timer ends.</p>
+
+            
+
+            <!-- Render the rest of the content after removing the summary portion -->
+            
+<span id="continue-reading"></span><h2 id="backstory">Backstory:</h2>
+<p>I use timers to take breaks in between long reading and coding activities. Typically, for every 45 minutes of focused activity, I take a 10 to 15 minute break and use a timer app on my mobile to alert me for breaks. There's one problem: I have to switch my gaze to my mobile and move my hands from the keyboard to the mobile to check the remaining time before the timer ends.</p>
+<p>Then I decided to build an alarm application in Zig that would simply run in my terminal and notify me with a pop-up and alarm bell when the timer has ended.</p>
+<h2 id="requirements-and-design">Requirements and Design:</h2>
+<p><img src="https://blog.akhildevelops.co.in/timer-zig/assets/Screenshot_20260128_101739.png" alt="Timer Application Screenshot" /></p>
+<p>My requirements were that the application should show the remaining time in HOURS:MINUTES:SECONDS format, pop up a notification, and ring the alarm bell once the timer ends.</p>
+<p>I always wanted to experiment with signal interrupts in my applications and planned to use them in this timer application for learning and fun.</p>
+<p>There is a main thread that accepts a value for the timer in seconds and sleeps for that many seconds before notifying that the timer has ended. To show the remaining time in the terminal, which keeps updating every half second, the main thread takes help from a child thread that notifies it through a signal interrupt every half second to print the remaining time to the terminal.</p>
+<h2 id="implementation">Implementation:</h2>
+<h3 id="accepting-timer-value">Accepting Timer Value:</h3>
+<p>The application will accept the timer value in seconds and parse it to an <code>i64</code> numeric datatype. Later, the parsed value is converted to a <code>timespec</code> struct that will be passed as an argument to <code>nanosleep</code>, an interruptible sleep function.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="zig"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">const</span><span style="color: light-dark(#E36209, #FFAB70);"> in_secs</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#E36209, #FFAB70);"> args</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">next</span><span>()</span><span>.</span><span style="color: light-dark(#D73A49, #F97583);">?</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">const</span><span style="color: light-dark(#E36209, #FFAB70);"> timer_secs</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#D73A49, #F97583);"> try</span><span style="color: light-dark(#E36209, #FFAB70);"> std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">fmt</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">parseInt</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">i64</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> in_secs</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> 10</span><span>)</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">var</span><span style="color: light-dark(#E36209, #FFAB70);"> timer_spec</span><span>:</span><span style="color: light-dark(#E36209, #FFAB70);"> std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">os</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">linux</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">timespec</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> .</span><span>{ </span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">sec</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#E36209, #FFAB70);"> timer_secs</span><span>,</span><span> .</span><span style="color: light-dark(#E36209, #FFAB70);">nsec</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span><span> }</span><span>;</span></span></code></pre><h3 id="main-thread-interrupter">Main Thread Interrupter:</h3>
+<p>The main thread cannot display the remaining time if it sleeps indefinitely until the timer ends. Therefore, a child thread will interrupt every half second for the main thread to print the remaining time and resume the timer. <code>pthread_kill</code> is used to send the interrupt signal <code>SIGUSR1</code>.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="zig"><span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">//</span><span style="color: light-dark(#6A737D, #6A737D);"> Called in main thread</span></span>
+<span class="giallo-l"><span style="color: light-dark(#E36209, #FFAB70);">_</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#D73A49, #F97583);"> try</span><span style="color: light-dark(#E36209, #FFAB70);"> std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">Thread</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">spawn</span><span>(</span><span>.</span><span>{}</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> remaining_time</span><span>,</span><span> .</span><span>{ </span><span style="color: light-dark(#E36209, #FFAB70);">init</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> current_thread</span><span> })</span><span>;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: light-dark(#6A737D, #6A737D);">//</span><span style="color: light-dark(#6A737D, #6A737D);"> Runs in child thread</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">const</span><span style="color: light-dark(#E36209, #FFAB70);"> progress_check</span><span>:</span><span style="color: light-dark(#E36209, #FFAB70);"> std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">os</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">linux</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">timespec</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span> .</span><span>{ </span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">sec</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span><span>,</span><span> .</span><span style="color: light-dark(#E36209, #FFAB70);">nsec</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#005CC5, #79B8FF);"> @divExact</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">time</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">ns_per_s</span><span>,</span><span style="color: light-dark(#005CC5, #79B8FF);"> 2</span><span>) }</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">fn</span><span style="color: light-dark(#6F42C1, #B392F0);"> remaining_time</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">_</span><span>:</span><span style="color: light-dark(#E36209, #FFAB70);"> std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">process</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">Init</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> parent_thread</span><span>:</span><span style="color: light-dark(#E36209, #FFAB70);"> c</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">pthread_t</span><span>) </span><span style="color: light-dark(#D73A49, #F97583);">!</span><span style="color: light-dark(#D73A49, #F97583);">void</span><span> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    while</span><span> (</span><span style="color: light-dark(#D73A49, #F97583);">true</span><span>) {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        if</span><span> (</span><span style="color: light-dark(#E36209, #FFAB70);">std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">os</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">linux</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">nanosleep</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">&amp;</span><span style="color: light-dark(#E36209, #FFAB70);">progress_check</span><span>,</span><span style="color: light-dark(#D73A49, #F97583);"> null</span><span>) </span><span style="color: light-dark(#D73A49, #F97583);">!=</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span><span>) {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#E36209, #FFAB70);">            std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">os</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">linux</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">exit</span><span>(</span><span style="color: light-dark(#005CC5, #79B8FF);">1</span><span>)</span><span>;</span></span>
+<span class="giallo-l"><span>        }</span></span>
+<span class="giallo-l"><span style="color: light-dark(#E36209, #FFAB70);">        _</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#E36209, #FFAB70);"> c</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">pthread_kill</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">parent_thread</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> c</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">SIGUSR1</span><span>)</span><span>;</span></span>
+<span class="giallo-l"><span>    }</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre><h3 id="main-thread-resume">Main Thread Resume:</h3>
+<p>After the child thread interrupts, <code>nanosleep</code> in the main thread returns non-zero, indicating to the main thread to log the remaining time. Once the remaining time is logged, the main thread is resumed by calling <code>nanosleep</code> with the remaining time. When <code>nanosleep</code> exits without any interrupt (i.e., by returning zero), the timer application ends with an alarm bell and notification.</p>
+<pre class="giallo" style="color-scheme: light dark; color: light-dark(#24292E, #E1E4E8); background-color: light-dark(#FFFFFF, #24292E);"><code data-lang="zig"><span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">while</span><span> (</span><span style="color: light-dark(#D73A49, #F97583);">true</span><span>) {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">    if</span><span> (</span><span style="color: light-dark(#E36209, #FFAB70);">std</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">os</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">linux</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">nanosleep</span><span>(</span><span style="color: light-dark(#D73A49, #F97583);">&amp;</span><span style="color: light-dark(#E36209, #FFAB70);">timer_spec</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> rem_timer_spec</span><span>) </span><span style="color: light-dark(#D73A49, #F97583);">!=</span><span style="color: light-dark(#005CC5, #79B8FF);"> 0</span><span>) {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#E36209, #FFAB70);">        timer_spec</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#E36209, #FFAB70);"> rem_timer_spec</span><span>.</span><span style="color: light-dark(#D73A49, #F97583);">*</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        const</span><span style="color: light-dark(#E36209, #FFAB70);"> rem_time</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#E36209, #FFAB70);"> TimeDelta</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">from_timespec</span><span>(</span><span style="color: light-dark(#E36209, #FFAB70);">timer_spec</span><span>)</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#E36209, #FFAB70);">        _</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#D73A49, #F97583);"> try</span><span style="color: light-dark(#E36209, #FFAB70);"> writer</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">write</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">\x1b</span><span style="color: light-dark(#005CC5, #79B8FF);">\x5b</span><span style="color: light-dark(#005CC5, #79B8FF);">\x32</span><span style="color: light-dark(#005CC5, #79B8FF);">\x4b</span><span style="color: light-dark(#005CC5, #79B8FF);">\r</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>)</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#E36209, #FFAB70);">        _</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#D73A49, #F97583);"> try</span><span style="color: light-dark(#E36209, #FFAB70);"> writer</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">print</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#032F62, #9ECBFF);">Remaining: {d}Hours, {d}Minutes, {d}Seconds</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>,</span><span> .</span><span>{ </span><span style="color: light-dark(#E36209, #FFAB70);">rem_time</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">hours</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> rem_time</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">minutes</span><span>,</span><span style="color: light-dark(#E36209, #FFAB70);"> rem_time</span><span>.</span><span style="color: light-dark(#E36209, #FFAB70);">seconds</span><span> })</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        try</span><span style="color: light-dark(#E36209, #FFAB70);"> writer</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">flush</span><span>()</span><span>;</span></span>
+<span class="giallo-l"><span>    } </span><span style="color: light-dark(#D73A49, #F97583);">else</span><span> {</span></span>
+<span class="giallo-l"><span style="color: light-dark(#E36209, #FFAB70);">        _</span><span style="color: light-dark(#D73A49, #F97583);"> =</span><span style="color: light-dark(#D73A49, #F97583);"> try</span><span style="color: light-dark(#E36209, #FFAB70);"> writer</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">print</span><span>(</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span style="color: light-dark(#005CC5, #79B8FF);">\n</span><span style="color: light-dark(#032F62, #9ECBFF);">Beep{s}</span><span style="color: light-dark(#005CC5, #79B8FF);">\n</span><span style="color: light-dark(#032F62, #9ECBFF);">&quot;</span><span>,</span><span> .</span><span>{</span><span style="color: light-dark(#D73A49, #F97583);">&amp;</span><span>[</span><span style="color: light-dark(#E36209, #FFAB70);">_</span><span>]</span><span style="color: light-dark(#D73A49, #F97583);">u8</span><span>{</span><span style="color: light-dark(#005CC5, #79B8FF);">7</span><span>}})</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        try</span><span style="color: light-dark(#E36209, #FFAB70);"> writer</span><span>.</span><span style="color: light-dark(#6F42C1, #B392F0);">flush</span><span>()</span><span>;</span></span>
+<span class="giallo-l"><span style="color: light-dark(#D73A49, #F97583);">        break</span><span>;</span></span>
+<span class="giallo-l"><span>    }</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre>
+
+        
+    </article>
+
+    <!-- Comment section -->
+    
+      
+    
+
+
+    <!-- Page footer -->
+    
+    <footer>
+        <hr>
+        <p>
+            
+                Published by Akhil Teja
+            
+            
+                
+                in <a href="https://blog.akhildevelops.co.in/categories/systems-programming/">systems-programming</a>
+            
+            
+                and
+                tagged
+                
+                    <a href="https://blog.akhildevelops.co.in/tags/ziglang/">ziglang</a>
+                    
+                        
+                            
+                                and
+                            
+                        
+                    
+                
+                    <a href="https://blog.akhildevelops.co.in/tags/timer/">timer</a>
+                    
+                        
+                    
+                
+            
+        </p>
+
+        <!-- Revision history (optional) -->
+        
+          
+            
+              
+            
+          
+        
+
+        
+        
+    </footer>
+
+
+</article>
+
+
+    </main>
+    
+
+  </body>
+</html>

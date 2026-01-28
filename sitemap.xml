@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://blog.akhildevelops.co.in/</loc>
+    </url>
+    <url>
+        <loc>https://blog.akhildevelops.co.in/categories/</loc>
+    </url>
+    <url>
+        <loc>https://blog.akhildevelops.co.in/categories/systems-programming/</loc>
+    </url>
+    <url>
+        <loc>https://blog.akhildevelops.co.in/page/1/</loc>
+    </url>
+    <url>
+        <loc>https://blog.akhildevelops.co.in/tags/</loc>
+    </url>
+    <url>
+        <loc>https://blog.akhildevelops.co.in/tags/timer/</loc>
+    </url>
+    <url>
+        <loc>https://blog.akhildevelops.co.in/tags/ziglang/</loc>
+    </url>
+    <url>
+        <loc>https://blog.akhildevelops.co.in/timer-zig/</loc>
+        <lastmod>2026-01-28</lastmod>
+    </url>
+</urlset>
