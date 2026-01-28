@@ -7,30 +7,30 @@ date = 2026-01-28
 categories = ["systems-programming"]
 tags = ["ziglang", "timer"]
 +++
-A simple timer application built in Zig that uses Linux signal interrupts to show remaining time in terminal and notify once timer ends.
+A simple timer application built in Zig that uses Linux signal interrupts to show the remaining time in the terminal and notify the user once the timer ends.
 
 <!-- more -->
 
 ## Backstory:
-I use Timers to take breaks in between from long reading and coding activities. Typically for every 45min of focused activity I take a 10 to 15 min break and use timer app in my mobile to alert me for breaks. There's one problem that I had to everytime switch my gaze to mobile and move my hands from keyboard to mobile to check remaining time before timer ends.
+I use timers to take breaks in between long reading and coding activities. Typically, for every 45 minutes of focused activity, I take a 10 to 15 minute break and use a timer app on my mobile to alert me for breaks. There's one problem: I have to switch my gaze to my mobile and move my hands from the keyboard to the mobile to check the remaining time before the timer ends.
 
-Then I decided to build an alarm application in zig that will simply run in my terminal and notify with a pop up and alarm bell that timer has ended.
+Then I decided to build an alarm application in Zig that would simply run in my terminal and notify me with a pop-up and alarm bell when the timer has ended.
 
 ## Requirements and Design:
 
 ![Timer Application Screenshot](assets/Screenshot_20260128_101739.png)
 
-My requirements were the application should show remaining time in HOURS:MINUTES:SECONDS format and pop up a notification and ring the alarm bell once timer ends.
+My requirements were that the application should show the remaining time in HOURS:MINUTES:SECONDS format, pop up a notification, and ring the alarm bell once the timer ends.
 
-I always wanted to play with signal interrupts in my application and planned to use them in this timer application for learning and fun.
+I always wanted to experiment with signal interrupts in my applications and planned to use them in this timer application for learning and fun.
 
-There's a main thread that accepts a value to end timer in seconds and sleeps for those many seconds before notifying that timer has ended. To show the remaining time in terminal, that keeps updating for every 1/2 second, main thread takes help of a child thread that notifies it through signal interrupt for every 1/2 second to print remaining time to terminal.
+There is a main thread that accepts a value for the timer in seconds and sleeps for that many seconds before notifying that the timer has ended. To show the remaining time in the terminal, which keeps updating every half second, the main thread takes help from a child thread that notifies it through a signal interrupt every half second to print the remaining time to the terminal.
 
 
 ## Implementation:
-### Accepting Timer value:
+### Accepting Timer Value:
 
-Application will accept timer value in seconds and parses it to an `i64` numeric datatype. Later, the parsed value is converted to `timespec` struct that will be passed as an argument to `nanosleep`, an interruptible sleep function.
+The application will accept the timer value in seconds and parse it to an `i64` numeric datatype. Later, the parsed value is converted to a `timespec` struct that will be passed as an argument to `nanosleep`, an interruptible sleep function.
 
 ```zig
 const in_secs = args.next().?;
@@ -39,7 +39,7 @@ var timer_spec: std.os.linux.timespec = .{ .sec = timer_secs, .nsec = 0 };
 ```
 
 ### Main Thread Interrupter:
-Main thread cannot display remaining time if it sleeps indefinitely until timer ends. Therefore a child thread will interrupt for every half second for main thread to print remaining time and resume the timer. `pthread_kill` is used to send the interrupt signal `SIGUSR1`.
+The main thread cannot display the remaining time if it sleeps indefinitely until the timer ends. Therefore, a child thread will interrupt every half second for the main thread to print the remaining time and resume the timer. `pthread_kill` is used to send the interrupt signal `SIGUSR1`.
 
 ```zig
 // Called in main thread
@@ -56,8 +56,8 @@ fn remaining_time(_: std.process.Init, parent_thread: c.pthread_t) !void {
     }
 }
 ```
-### Main Thread resume:
-After child thread interrupts `nanosleep` in main thread returns non-zero intimating main thread to log remaining time. Once the remaining time is logged. Main thread is again resumed by calling `nanosleep` with remaining time. Once `nanosleep` exits without any interrupt i.e, by returning zero timer application ends with alarm bell and notification.
+### Main Thread Resume:
+After the child thread interrupts, `nanosleep` in the main thread returns non-zero, indicating to the main thread to log the remaining time. Once the remaining time is logged, the main thread is resumed by calling `nanosleep` with the remaining time. When `nanosleep` exits without any interrupt (i.e., by returning zero), the timer application ends with an alarm bell and notification.
 
 ```zig
 while (true) {
